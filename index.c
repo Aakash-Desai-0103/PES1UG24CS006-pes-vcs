@@ -224,8 +224,68 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
-    return -1;
-}
+    if (!index || !path) return -1;
+
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        fprintf(stderr, "error: cannot access '%s'\n", path);
+        return -1;
+    }
+
+    // Open file
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return -1;
+
+    size_t size = st.st_size;
+    void *buffer = NULL;
+
+    // Read file safely
+    if (size > 0) {
+        buffer = malloc(size);
+        if (!buffer) {
+            fclose(fp);
+            return -1;
+        }
+
+        size_t read_bytes = fread(buffer, 1, size, fp);
+        if (read_bytes != size) {
+            fclose(fp);
+            free(buffer);
+            return -1;
+        }
+    }
+
+    fclose(fp);
+
+    // Write blob to object store
+    ObjectID id;
+    if (object_write(OBJ_BLOB, buffer, size, &id) != 0) {
+        if (buffer) free(buffer);
+        return -1;
+    }
+
+    if (buffer) free(buffer);
+
+    // Find existing entry or create new one
+    IndexEntry *e = index_find(index, path);
+
+    if (!e) {
+        if (index->count >= MAX_INDEX_ENTRIES) {
+            fprintf(stderr, "error: index full\n");
+            return -1;
+        }
+        e = &index->entries[index->count++];
+    }
+
+    // Fill entry
+    e->mode = get_file_mode(path);
+    e->hash = id;
+    e->mtime_sec = st.st_mtime;
+    e->size = st.st_size;
+    strcpy(e->path, path);
+
+
+///
+    // Save index
+    return index_save(index);
+}//,,
