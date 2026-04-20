@@ -4,6 +4,10 @@
 
 This project implements a simplified version control system inspired by Git. It covers core concepts such as object storage, indexing, tree construction, commits, and repository structure across multiple phases.
 
+Name:Aakash Desai
+
+SRN:PES1UG24CS006
+
 ---
 ## Screenshots
 
