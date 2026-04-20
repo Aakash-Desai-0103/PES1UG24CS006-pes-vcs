@@ -15,7 +15,7 @@ pes: $(OBJS)
 
 # ─── Test binaries ───────────────────────────────────────────────────────────
 
-test_objects: test_objects.o object.o
+test_objects: test_objects.o object.o tree.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test_tree: test_tree.o object.o tree.o
